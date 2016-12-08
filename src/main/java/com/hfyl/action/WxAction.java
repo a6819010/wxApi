@@ -18,6 +18,25 @@ import java.util.TreeMap;
 public class WxAction {
 
     /**
+     * 请求来源校验
+     * @param signature
+     * @param timestamp
+     * @param nonce
+     * @param echostr
+     * @return
+     */
+    @GET
+    @Path(value = "/verify")
+    @Produces("text/html;charset=UTF-8")
+    public String verify(@QueryParam("signature")String signature,
+                         @QueryParam("timestamp")String timestamp,
+                         @QueryParam("nonce")String nonce,
+                         @QueryParam("echostr")String echostr)
+    {
+        return echostr;
+    }
+
+    /**
      *  获取H5微信朋友圈分享相关签名配置
      * @param url
      * @return
