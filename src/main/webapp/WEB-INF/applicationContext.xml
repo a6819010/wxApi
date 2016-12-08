@@ -9,7 +9,7 @@ http://www.springframework.org/schema/context/spring-context.xsd">
 	<context:annotation-config />
 	<context:component-scan base-package="com.hfyl*" />
 
-	<bean id="DemoAction" class="com.hfyl.action.DemoAction" />
+	<bean id="WxAction" class="com.hfyl.action.WxAction" />
 
 	<!--  <bean id="StrategyAction" class="com.youguu.quant.action.StrategyAction" /> -->
 
