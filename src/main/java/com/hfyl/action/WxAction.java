@@ -1,8 +1,10 @@
 package com.hfyl.action;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hfyl.util.WxInfo;
 import com.hfyl.util.WxUtil;
+import com.hfyl.util.YouguuHttpsClient;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -76,6 +78,41 @@ public class WxAction {
         jsonData.put("token", wxInfo.access_token);
         jsonData.put("appid", wxInfo.getAppId());
         return jsonData.toJSONString();
+    }
+
+    @GET
+    @Path(value = "/createMenu")
+    @Produces("text/html;charset=UTF-8")
+    public String createMenu(@QueryParam("type")String type,
+                                            @QueryParam("name")String name,
+                                            @QueryParam("url")String url)
+    {
+        WxInfo wx = new WxInfo();
+        String apiUrl = wx.getCareateMenuUrl();
+        JSONObject obj = new JSONObject();
+        JSONArray ja = new JSONArray();
+        JSONObject ben = new JSONObject();
+        ben.put("type",type);
+        ben.put("name",name);
+        ben.put("url",url);
+        ja.add(ben);
+        obj.put("button",ja);
+        return YouguuHttpsClient.getClient().doPost(apiUrl,obj.toJSONString());
+    }
+
+    public static void main(String [] args)
+    {
+        WxInfo wx = new WxInfo();
+        String apiUrl = wx.getCareateMenuUrl();
+        JSONObject obj = new JSONObject();
+        JSONArray ja = new JSONArray();
+        JSONObject ben = new JSONObject();
+        ben.put("type","view");
+        ben.put("name","性福检测");
+        ben.put("url","http://wx.180ew.com/");
+        ja.add(ben);
+        obj.put("button",ja);
+        System.out.println(YouguuHttpsClient.getClient().doPost(apiUrl, obj.toJSONString()));
     }
 
 }

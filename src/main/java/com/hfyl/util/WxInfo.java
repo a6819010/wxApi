@@ -38,8 +38,18 @@ public class WxInfo {
      */
     private String jsapiUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket";
 
+    private String careateMenuUrl = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=%s";
+
     public String getAppId() {
         return appId;
+    }
+
+    public String getCareateMenuUrl() {
+        if(this.access_token==null){
+            this.getToken();
+        }
+        careateMenuUrl = String.format(careateMenuUrl,this.access_token);
+        return careateMenuUrl;
     }
 
     public String getToken(){
