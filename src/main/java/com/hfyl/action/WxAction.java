@@ -106,11 +106,73 @@ public class WxAction {
         String apiUrl = wx.getCareateMenuUrl();
         JSONObject obj = new JSONObject();
         JSONArray ja = new JSONArray();
-        JSONObject ben = new JSONObject();
-        ben.put("type","view");
-        ben.put("name","性福检测");
-        ben.put("url","http://wx.180ew.com/");
-        ja.add(ben);
+
+        JSONObject button1 = new JSONObject();
+        button1.put("name","咨询");
+        JSONArray subJa = new JSONArray();
+        JSONObject subButton = new JSONObject();
+        subButton.put("name","快速问诊");
+        subButton.put("url","http://xfcheck.com/wenzhen1.html");
+        subButton.put("type","view");
+        subJa.add(subButton);
+
+        subButton = new JSONObject();
+        subButton.put("name","自助测评");
+        subButton.put("url","http://xfcheck.com/ceping.html");
+        subButton.put("type","view");
+        subJa.add(subButton);
+
+        button1.put("sub_button",subJa);
+        ja.add(button1);
+
+        JSONObject button2 = new JSONObject();
+        button2.put("name","检测");
+        subJa = new JSONArray();
+        subButton = new JSONObject();
+        subButton.put("name","STD检测");
+        subButton.put("url","http://xfcheck.com/index.html");
+        subButton.put("type","view");
+        subJa.add(subButton);
+
+        subButton = new JSONObject();
+        subButton.put("name","不孕不育检测");
+        subButton.put("url","http://xfcheck.com/index.html");
+        subButton.put("type","view");
+        subJa.add(subButton);
+
+        subButton = new JSONObject();
+        subButton.put("name","优生优育检测");
+        subButton.put("url","http://xfcheck.com/index.html");
+        subButton.put("type","view");
+        subJa.add(subButton);
+
+        button2.put("sub_button",subJa);
+        ja.add(button2);
+
+        JSONObject button3 = new JSONObject();
+        button3.put("name","我的");
+        subJa = new JSONArray();
+        subButton = new JSONObject();
+        subButton.put("name","个人中心");
+        subButton.put("url","http://xfcheck.com/member-after.html");
+        subButton.put("type","view");
+        subJa.add(subButton);
+
+        subButton = new JSONObject();
+        subButton.put("name","性服知识");
+        subButton.put("url","http://xfcheck.com/st-list.html");
+        subButton.put("type","view");
+        subJa.add(subButton);
+
+        subButton = new JSONObject();
+        subButton.put("name","下载APP");
+        subButton.put("url","http://xfcheck.com/index.html");
+        subButton.put("type","view");
+        subJa.add(subButton);
+
+        button3.put("sub_button",subJa);
+        ja.add(button3);
+
         obj.put("button",ja);
         System.out.println(YouguuHttpsClient.getClient().doPost(apiUrl, obj.toJSONString()));
     }

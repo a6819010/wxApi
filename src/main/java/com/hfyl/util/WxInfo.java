@@ -44,6 +44,10 @@ public class WxInfo {
         return appId;
     }
 
+    /**
+     *  创建菜单
+     * @return
+     */
     public String getCareateMenuUrl() {
         if(this.access_token==null){
             this.getToken();
