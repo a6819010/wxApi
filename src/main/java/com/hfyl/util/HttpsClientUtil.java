@@ -22,11 +22,11 @@ import java.security.cert.X509Certificate;
 * @date 2014年5月5日 上午9:19:04 
 * @version V1.0
  */
-public class YouguuHttpsClient {
+public class HttpsClientUtil {
 	private static String CHARCODING = "UTF-8";
 	private int TIMEOUT = 3000;
-	public static YouguuHttpsClient  getClient(){
-		return new YouguuHttpsClient();
+	public static HttpsClientUtil getClient(){
+		return new HttpsClientUtil();
 	}
 	
 	/**

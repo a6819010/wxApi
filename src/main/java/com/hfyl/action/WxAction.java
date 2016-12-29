@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.hfyl.util.WxInfo;
 import com.hfyl.util.WxUtil;
-import com.hfyl.util.YouguuHttpsClient;
+import com.hfyl.util.HttpsClientUtil;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -55,11 +55,11 @@ public class WxAction {
         //生成签名的时间戳
         String timestamp = String.valueOf(System.currentTimeMillis());
 
-        //生成签名的随机串
-        String noncestr = WxUtil.getnoncestr();
-
         //获取jsapi_ticket票据
         String jsapi_ticket = wxInfo.getJsapi();
+
+        //生成签名的随机串
+        String noncestr = WxUtil.getnoncestr();
 
         //生成签名
         Map<String, String> params = new TreeMap<>();
@@ -80,6 +80,13 @@ public class WxAction {
         return jsonData.toJSONString();
     }
 
+    /**
+     *  创建菜单
+     * @param type
+     * @param name
+     * @param url
+     * @return
+     */
     @GET
     @Path(value = "/createMenu")
     @Produces("text/html;charset=UTF-8")
@@ -97,10 +104,57 @@ public class WxAction {
         ben.put("url",url);
         ja.add(ben);
         obj.put("button",ja);
-        return YouguuHttpsClient.getClient().doPost(apiUrl,obj.toJSONString());
+        return HttpsClientUtil.getClient().doPost(apiUrl,obj.toJSONString());
     }
 
-    public static void main(String [] args)
+    /**
+     *  下单接口
+     * @param productName
+     * @param orderId
+     * @param totalFee
+     * @param ip
+     * @param openId
+     * @return
+     */
+    @GET
+    @Path(value = "/createOrder")
+    @Produces("text/html;charset=UTF-8")
+    public String createOrder(@QueryParam("productName")String productName,
+                             @QueryParam("orderId")String orderId,
+                             @QueryParam("totalFee")String totalFee,
+                             @QueryParam("ip")String ip,
+                             @QueryParam("openId")String openId)
+    {
+        JSONObject jsonData = new JSONObject();
+
+        WxInfo wxInfo = WxInfo.getCacheWxInfo();
+
+        //生成签名的时间戳
+        String timestamp = String.valueOf(System.currentTimeMillis());
+
+        //获取jsapi_ticket票据
+        String jsapi_ticket = wxInfo.getJsapi();
+
+        //生成签名的随机串
+        String noncestr = WxUtil.getnoncestr();
+        //生成签名
+        Map<String, String> params = new TreeMap<>();
+        params.put("noncestr", noncestr);
+        params.put("timestamp", timestamp);
+        params.put("jsapi_ticket", jsapi_ticket);
+        String signature = wxInfo.signature(params);
+
+
+
+        return null;
+    }
+
+
+
+    /**
+     * 直接运行创建菜单
+     */
+    public static void addMenu()
     {
         WxInfo wx = new WxInfo();
         String apiUrl = wx.getCareateMenuUrl();
@@ -174,7 +228,12 @@ public class WxAction {
         ja.add(button3);
 
         obj.put("button",ja);
-        System.out.println(YouguuHttpsClient.getClient().doPost(apiUrl, obj.toJSONString()));
+        System.out.println(HttpsClientUtil.getClient().doPost(apiUrl, obj.toJSONString()));
+    }
+
+    public static void main(String [] args)
+    {
+
     }
 
 }

@@ -22,6 +22,26 @@ public class WxInfo {
 
     private String appSecret;
 
+    /**
+     *  商户名称
+     */
+    public static String mchName = "北京佳品益德健康科技有限公司-%s";
+
+    /**
+     * 微信异步回调接口地址
+     */
+    public static String notifyUrl = "";
+
+    /**
+     *  交易类型为公众号支付
+     */
+    public static String tradeType = "JSAPI";
+
+    /**
+     *  商户号
+     */
+    private String mch_id;
+
     private static Hashtable<Integer,WxInfo> map = new Hashtable();
 
     private String grant_type = "client_credential";
@@ -38,7 +58,15 @@ public class WxInfo {
      */
     private String jsapiUrl = "https://api.weixin.qq.com/cgi-bin/ticket/getticket";
 
+    /**
+     * 创建菜单接口
+     */
     private String careateMenuUrl = "https://api.weixin.qq.com/cgi-bin/menu/create?access_token=%s";
+
+    /**
+     * 微信下单接口
+     */
+    private String orderUrl = "https://api.mch.weixin.qq.com/pay/unifiedorder";
 
     public String getAppId() {
         return appId;
@@ -62,7 +90,7 @@ public class WxInfo {
                 .append("grant_type").append("=").append(grant_type).append("&")
                 .append("appid").append("=").append(appId).append("&")
                 .append("secret").append("=").append(appSecret);
-        String response =  YouguuHttpsClient.getClient().doGet(sb.toString());
+        String response =  HttpsClientUtil.getClient().doGet(sb.toString());
         String access_token_new = null;
         if(response!=null){
             access_token_new = JSONObject.parseObject(response).getString("access_token");
@@ -73,8 +101,14 @@ public class WxInfo {
 
     public WxInfo()
     {
-        this.appId = "wx7f33eae536af41dc";
-        this.appSecret = "931116f743ebcb4fc6677c76020dc2f4";
+        //测试环境
+        //this.appId = "wx7f33eae536af41dc";
+        //this.appSecret = "931116f743ebcb4fc6677c76020dc2f4";
+
+        //生产环境
+        this.appId = "wx4f81fa7f2a9ee51e";
+        this.appSecret = "1a11cf20785fd083238b10a9dc20b4d9";
+        this.mch_id = "1415330802";
     }
 
     public static WxInfo getCacheWxInfo(){
@@ -109,7 +143,7 @@ public class WxInfo {
                     }
                 }
             }
-            String response =  YouguuHttpsClient.getClient().doGet(getJsapiPath(this.access_token));
+            String response =  HttpsClientUtil.getClient().doGet(getJsapiPath(this.access_token));
             if(response!=null){
                 JSONObject json= JSONObject.parseObject(response);
                 int errcode = json.getIntValue("errcode");
@@ -122,7 +156,7 @@ public class WxInfo {
                             this.getToken();
                         }
                     }
-                    response =  YouguuHttpsClient.getClient().doGet(getJsapiPath(this.access_token));
+                    response =  HttpsClientUtil.getClient().doGet(getJsapiPath(this.access_token));
                     json= JSONObject.parseObject(response);
                     errcode = json.getIntValue("errcode");
                     if(0 == errcode){
