@@ -119,11 +119,10 @@ public class WxAction {
     @GET
     @Path(value = "/createOrder")
     @Produces("text/html;charset=UTF-8")
-    public String createOrder(@QueryParam("productName")String productName,
-                             @QueryParam("orderId")String orderId,
+    public String createOrder(@QueryParam("productData")String productData,
                              @QueryParam("totalFee")String totalFee,
                              @QueryParam("ip")String ip,
-                             @QueryParam("openId")String openId)
+                             @QueryParam("code")String code)
     {
         JSONObject jsonData = new JSONObject();
 

@@ -2,10 +2,7 @@ package com.hfyl.util;
 
 import com.alibaba.fastjson.JSONObject;
 
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by xyj on 2016/12/8.
@@ -68,6 +65,11 @@ public class WxInfo {
      */
     private String orderUrl = "https://api.mch.weixin.qq.com/pay/unifiedorder";
 
+    /**
+     *  获取微信token的接口地址
+     */
+    private String get_weixin_token_api = "https://api.weixin.qq.com/sns/oauth2/access_token";
+
     public String getAppId() {
         return appId;
     }
@@ -97,6 +99,32 @@ public class WxInfo {
             this.access_token = access_token_new;
         }
         return access_token_new;
+    }
+
+    /**
+     *  根据code获取openid
+     * @param code
+     * @return
+     */
+    private JSONObject getWxData(String code)
+    {
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("appid",appId);
+        paramMap.put("secret",appSecret);
+        paramMap.put("code", code);
+        paramMap.put("grant_type", "authorization_code");
+        Response<String> res = HttpsClientUtil.getClient().sendGet(get_weixin_token_api, paramMap, null, "UTF-8");
+        if("0000".equals(res.getCode())){
+            String result = res.getT();
+            JSONObject o = JSONObject.parseObject(result);
+            //如果获取token正常
+            if(!o.containsKey("errcode"))
+            {
+                //o.getString("openid");
+                return o;
+            }
+        }
+        return null;
     }
 
     public WxInfo()

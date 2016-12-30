@@ -1,17 +1,18 @@
 package com.hfyl.util;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManager;
+import javax.net.ssl.*;
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 
@@ -169,6 +170,210 @@ public class HttpsClientUtil {
 		}
 		
 		return null;
+	}
+
+	public Response<String> sendGet(String url, Map<String, String> params,Map<String, String> headParam,String charset){
+		Response<String> res = new Response<String>();
+		StringBuilder result = new StringBuilder();
+		BufferedReader in = null;
+		try {
+			String param = null;
+			if(params!=null && params.size()>0){
+				StringBuilder paramBuffer = new StringBuilder();
+				for(Map.Entry<String, String> entry:params.entrySet()){
+					paramBuffer.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(), charset)).append("&");
+				}
+				param = paramBuffer.substring(0, paramBuffer.length()-1);
+			}
+
+			String urlNameString = url;
+			if(param!=null){
+				if(url.indexOf("?")>0){
+					urlNameString = url + "&" + param;
+				}else{
+					urlNameString = url + "?" + param;
+				}
+			}
+
+
+			URL realUrl = new URL(urlNameString);
+
+			HttpsURLConnection connection = (HttpsURLConnection)realUrl.openConnection();
+
+			connection.setRequestProperty("accept", "*/*");
+			connection.setRequestProperty("connection", "Keep-Alive");
+			connection.setRequestProperty("user-agent",
+					"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+			connection.setRequestProperty("Accept-Charset",charset);
+			connection.setRequestProperty("Content-Type",
+					"application/x-www-form-urlencoded;charset="+ charset);
+			if(headParam!=null && headParam.size()>0){
+				for(Map.Entry<String, String> entry:headParam.entrySet()){
+					connection.setRequestProperty(entry.getKey(),entry.getValue());
+				}
+			}
+			connection.setConnectTimeout(10000);
+			connection.setReadTimeout(15000);
+			connection.setHostnameVerifier(new HostnameVerifier() {
+				public boolean verify(String hostname, SSLSession session) {
+					return true;
+				}
+			});
+			connection.connect();
+
+
+
+			int code = connection.getResponseCode();
+
+			if(code==200){
+				in = new BufferedReader(new InputStreamReader(connection.getInputStream(),charset));
+				String line;
+				while ((line = in.readLine()) != null) {
+					result.append(line);
+				}
+				res.setCode("0000");
+				res.setMsg("ok");
+				res.setT(result.toString());
+			}else{
+				res.setCode("1001");
+				res.setMsg("返回码异常:" + code);
+			}
+
+
+		}catch(SocketTimeoutException e){
+			res.setCode("1001");
+			res.setMsg("连接超时");
+			e.printStackTrace();
+		}catch (Exception e) {
+			res.setCode("1001");
+			res.setMsg("连接异常");
+			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (in != null) {
+					in.close();
+				}
+			} catch (Exception e2) {
+				res.setCode("1002");
+				res.setMsg("关闭连接异常");
+				e2.printStackTrace();
+			}
+		}
+		return res;
+	}
+	/**
+	 *
+	 * @Title: sendPost
+	 * @Description: 发送Post请求
+	 * @param @param url
+	 * @param @param params
+	 * @param @param charset
+	 * @param @return
+	 * @return Response<String>    返回类型
+	 * @throws
+	 */
+	public Response<String> sendPost(String url, Map<String, String> params,Map<String, String> headParam,String charset){
+		Response<String> res = new Response<String>();
+		StringBuilder result = new StringBuilder();
+		BufferedReader in = null;
+		try {
+			URL realUrl = new URL(url);
+			HttpsURLConnection connection = (HttpsURLConnection) realUrl.openConnection();
+			connection.setRequestMethod("POST");// 提交模式
+			connection.setRequestProperty("accept", "*/*");
+			connection.setRequestProperty("connection", "Keep-Alive");
+			connection.setRequestProperty("user-agent",
+					"Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+			connection.setRequestProperty("Accept-Charset",charset);
+			connection.setRequestProperty("Content-Type",
+					"application/x-www-form-urlencoded;charset="+ charset);
+
+			if(headParam!=null && headParam.size()>0){
+				for(Map.Entry<String, String> entry:headParam.entrySet()){
+					connection.setRequestProperty(entry.getKey(),entry.getValue());
+				}
+			}
+
+			connection.setConnectTimeout(10000);
+			connection.setReadTimeout(15000);
+			connection.setDoOutput(true);
+			connection.setHostnameVerifier(new HostnameVerifier() {
+				public boolean verify(String hostname, SSLSession session) {
+					return true;
+				}
+			});
+			connection.connect();
+
+			String param = null;
+			if(params!=null && params.size()>0){
+
+				StringBuilder paramBuffer = new StringBuilder();
+
+				for(Map.Entry<String, String> entry:params.entrySet()){
+
+					paramBuffer.append(entry.getKey()).append("=").append(URLEncoder.encode(entry.getValue(),charset)).append("&");
+				}
+				param = paramBuffer.substring(0, paramBuffer.length()-1);
+
+				byte[] bypes = param.toString().getBytes();
+
+				connection.getOutputStream().write(bypes);// 输入参数
+			}
+
+			int code = connection.getResponseCode();
+
+			if(code==200){
+				in = new BufferedReader(new InputStreamReader(connection.getInputStream(),charset));
+				String line;
+				while ((line = in.readLine()) != null) {
+					result.append(line);
+				}
+				res.setCode("0000");
+				res.setMsg("ok");
+				res.setT(result.toString());
+			}else{
+				res.setCode("1001");
+				res.setMsg("返回码异常:" + code);
+			}
+
+
+		}catch(SocketTimeoutException e){
+			res.setCode("1001");
+			res.setMsg("连接超时");
+			e.printStackTrace();
+		}catch (Exception e) {
+			res.setCode("1001");
+			res.setMsg("连接异常");
+			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (in != null) {
+					in.close();
+				}
+			} catch (Exception e2) {
+				res.setCode("1002");
+				res.setMsg("关闭连接异常");
+				e2.printStackTrace();
+			}
+		}
+
+
+
+		return res;
+	}
+	public static void main(String[] args){
+
+		Map<String, String> params = new HashMap<String, String>();
+		params.put("client_id", "youguu");
+		params.put("client_secret", "3cf01470-140b-40bd-909f-0d95b9c1f70c");
+		params.put("code", "cf0e2ab1-48b8-4dd0-af2d-cb363b1eaf4b");
+		params.put("redirect_uri", "http://test.youguu.com/mobile/wap_trade/guangfa");
+		params.put("grant_type", "authorization_code");
+
+
+//		System.out.println(HttpsUtil.sendPost("https://testauth.gf.com.cn/server/ws/pub/token/access_token", params, "UTF-8"));
 	}
 	
 	
