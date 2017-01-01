@@ -2,6 +2,9 @@ package com.hfyl.util;
 
 import com.alibaba.fastjson.JSONObject;
 
+import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -22,7 +25,7 @@ public class WxInfo {
     /**
      *  商户名称
      */
-    public static String mchName = "北京佳品益德健康科技有限公司-%s";
+    public static String MCHNAME = "北京佳品益德健康科技有限公司-自检商品";
 
     /**
      * 微信异步回调接口地址
@@ -38,6 +41,11 @@ public class WxInfo {
      *  商户号
      */
     private String mch_id;
+
+    /**
+     * 商户密钥key
+     */
+    private static String mch_key = "W1u2h3u4a5j6i7a8n9x1u2y3u4n5j6ie";
 
     private static Hashtable<Integer,WxInfo> map = new Hashtable();
 
@@ -63,12 +71,16 @@ public class WxInfo {
     /**
      * 微信下单接口
      */
-    private String orderUrl = "https://api.mch.weixin.qq.com/pay/unifiedorder";
+    public static String ORDER_URL = "https://api.mch.weixin.qq.com/pay/unifiedorder";
 
     /**
      *  获取微信token的接口地址
      */
     private String get_weixin_token_api = "https://api.weixin.qq.com/sns/oauth2/access_token";
+
+    public static String SUCCESS = "SUCCESS"; //成功return_code
+
+    public static String FAIL = "FAIL";   //失败return_code
 
     public String getAppId() {
         return appId;
@@ -127,6 +139,12 @@ public class WxInfo {
         return null;
     }
 
+    public String getOpenId(String code)
+    {
+        JSONObject obj = getWxData(code);
+        return obj.getString("openid");
+    }
+
     public WxInfo()
     {
         //测试环境
@@ -137,6 +155,10 @@ public class WxInfo {
         this.appId = "wx4f81fa7f2a9ee51e";
         this.appSecret = "1a11cf20785fd083238b10a9dc20b4d9";
         this.mch_id = "1415330802";
+    }
+
+    public String getMchId() {
+        return mch_id;
     }
 
     public static WxInfo getCacheWxInfo(){
@@ -224,6 +246,55 @@ public class WxInfo {
         String param = sb.substring(0, sb.lastIndexOf("&"));
         String appsign = WxUtil.getSha1(param);
         return appsign;
+    }
+
+    /**
+     *  生成签名
+     * @param parameters
+     * @return
+     */
+    public static String createSign(Map<String, Object> parameters){
+        StringBuffer sb = new StringBuffer();
+        Set es = parameters.entrySet();//所有参与传参的参数按照accsii排序（升序）
+        Iterator it = es.iterator();
+        while(it.hasNext()) {
+            Map.Entry entry = (Map.Entry)it.next();
+            String k = (String)entry.getKey();
+            Object v = entry.getValue();
+            if(null != v && !"".equals(v) && !"sign".equals(k) && !"key".equals(k)) {
+                sb.append(k + "=" + v + "&");
+            }
+        }
+        sb.append("key=" + mch_key);
+        return getMd5(sb.toString().toUpperCase());
+    }
+
+    private static String getMd5(String str)
+    {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(str.getBytes());
+            return new BigInteger(1, md.digest()).toString(32);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * @author wangkai
+     * @date
+     * @Description：返回给微信的参数
+     * @param return_code
+     *            返回编码
+     * @param return_msg
+     *            返回信息
+     * @return
+     */
+    public static String setXML(String return_code, String return_msg) {
+        return "<xml><return_code><![CDATA[" + return_code
+                + "]]></return_code><return_msg><![CDATA[" + return_msg
+                + "]]></return_msg></xml>";
     }
 
 }

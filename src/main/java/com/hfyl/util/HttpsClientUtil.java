@@ -262,6 +262,81 @@ public class HttpsClientUtil {
 		}
 		return res;
 	}
+
+	/**
+	 *  POST发送xml请求
+	 * @param url
+	 * @param charset
+	 * @param xml
+     * @return
+     */
+	public Response<String> sendPostXml(String url,String charset,String xml)
+	{
+		Response<String> res = new Response<String>();
+		StringBuilder result = new StringBuilder();
+		BufferedReader in = null;
+		try {
+			URL realUrl = new URL(url);
+			HttpsURLConnection connection = (HttpsURLConnection) realUrl.openConnection();
+			connection.setRequestMethod("POST");// 提交模式
+			connection.setRequestProperty("accept", "*/*");
+			connection.setRequestProperty("connection", "Keep-Alive");
+			connection.setRequestProperty("user-agent","Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
+			connection.setRequestProperty("Accept-Charset",charset);
+			connection.setRequestProperty("Content-Type","text/xml");
+
+			connection.setConnectTimeout(10000);
+			connection.setReadTimeout(15000);
+			connection.setDoOutput(true);
+			connection.setHostnameVerifier(new HostnameVerifier() {
+				public boolean verify(String hostname, SSLSession session) {
+					return true;
+				}
+			});
+			connection.connect();
+
+			byte[] bypes = xml.getBytes();
+
+			connection.getOutputStream().write(bypes);// 输入参数
+
+			int code = connection.getResponseCode();
+
+			if(code==200){
+				in = new BufferedReader(new InputStreamReader(connection.getInputStream(),charset));
+				String line;
+				while ((line = in.readLine()) != null) {
+					result.append(line);
+				}
+				res.setCode("0000");
+				res.setMsg("ok");
+				res.setT(result.toString());
+			}else{
+				res.setCode("1001");
+				res.setMsg("返回码异常:" + code);
+			}
+		}catch(SocketTimeoutException e){
+			res.setCode("1001");
+			res.setMsg("连接超时");
+			e.printStackTrace();
+		}catch (Exception e) {
+			res.setCode("1001");
+			res.setMsg("连接异常");
+			e.printStackTrace();
+		}
+		finally {
+			try {
+				if (in != null) {
+					in.close();
+				}
+			} catch (Exception e2) {
+				res.setCode("1002");
+				res.setMsg("关闭连接异常");
+				e2.printStackTrace();
+			}
+		}
+		return res;
+	}
+
 	/**
 	 *
 	 * @Title: sendPost
