@@ -1,6 +1,9 @@
 package com.hfyl.util;
 
 import com.alibaba.fastjson.JSONObject;
+import com.hfyl.action.WxAction;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.math.BigInteger;
 import java.security.MessageDigest;
@@ -11,6 +14,8 @@ import java.util.*;
  * Created by xyj on 2016/12/8.
  */
 public class WxInfo {
+
+    private static Log log = LogFactory.getLog(WxAction.class);
 
     public  String access_token;
 
@@ -250,12 +255,13 @@ public class WxInfo {
 
     /**
      *  生成签名
-     * @param parameters
+     * @param arg
      * @return
      */
-    public static String createSign(Map<String, Object> parameters){
+    public static String createSign(Map<String, Object> arg){
+        SortedMap<String, Object> parameters = sortMap(arg);
         StringBuffer sb = new StringBuffer();
-        Set es = parameters.entrySet();//所有参与传参的参数按照accsii排序（升序）
+        Set es = parameters.entrySet();
         Iterator it = es.iterator();
         while(it.hasNext()) {
             Map.Entry entry = (Map.Entry)it.next();
@@ -266,7 +272,53 @@ public class WxInfo {
             }
         }
         sb.append("key=" + mch_key);
-        return getMd5(sb.toString().toUpperCase());
+        log.info("sb："+sb.toString());
+        String md = MD5(sb.toString()).toUpperCase();
+        log.info("md5："+md);
+        return md;
+    }
+
+    private static SortedMap<String, Object> sortMap(Map<String, Object> map) {
+
+        List<Map.Entry<String, Object>> infoIds = new ArrayList<>(map.entrySet());
+
+        // 排序
+        Collections.sort(infoIds, new Comparator<Map.Entry<String, Object>>() {
+            public int compare(Map.Entry<String, Object> o1,
+                               Map.Entry<String, Object> o2) {
+                return (o1.getKey()).toString().compareTo(o2.getKey());
+            }
+        });
+        // 排序后
+        SortedMap<String, Object> sortmap = new TreeMap<>();
+        for (int i = 0; i < infoIds.size(); i++) {
+            String[] split = infoIds.get(i).toString().split("=");
+            sortmap.put(split[0], split[1]);
+        }
+        return sortmap;
+    }
+
+    private static String MD5(String sourceStr) {
+        String result = "";
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(sourceStr.getBytes());
+            byte b[] = md.digest();
+            int i;
+            StringBuffer buf = new StringBuffer("");
+            for (int offset = 0; offset < b.length; offset++) {
+                i = b[offset];
+                if (i < 0)
+                    i += 256;
+                if (i < 16)
+                    buf.append("0");
+                buf.append(Integer.toHexString(i));
+            }
+            result = buf.toString();
+        } catch (NoSuchAlgorithmException e) {
+            System.out.println(e);
+        }
+        return result;
     }
 
     private static String getMd5(String str)

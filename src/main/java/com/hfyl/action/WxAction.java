@@ -114,17 +114,16 @@ public class WxAction {
     }
 
     /**
-     *  下单接口
-     * @param totalFee
+     * 下单接口
      * @param ip
+     * @param code
      * @return
      */
     @POST
     @Path(value = "/createOrder")
     @Produces("text/html;charset=UTF-8")
     public String createOrder(
-            @FormParam("productData")String productData,
-            @FormParam("totalFee")String totalFee,
+            @FormParam("orderId")String orderId,
             @FormParam("ip")String ip,
             @FormParam("code")String code)
     {
@@ -134,35 +133,88 @@ public class WxAction {
 
         //TODO 请求微信统一下单接口
 
-        JSONObject jsonData = new JSONObject();
+        try {
+            JSONObject jsonData = new JSONObject();
 
-        //初始化微信信息
-        WxInfo wxInfo = WxInfo.getCacheWxInfo();
+            //初始化微信信息
+            WxInfo wxInfo = WxInfo.getCacheWxInfo();
 
-        //获取下单接口提交的参数 TODO 订单总价格和我们生成的订单号需要替换下
-        String dataXml = getOrderXml(wxInfo,1,"123",ip,code);
+            //获取下单接口提交的参数 TODO 订单总价格和我们生成的订单号需要替换下
+            String dataXml = getOrderXml(wxInfo,10,"ABCD1234",ip,code);
+            log.info("dataXml："+dataXml);
 
-        //调用微信下单接口
-        Response<String> res =  HttpsClientUtil.getClient().sendPostXml(WxInfo.ORDER_URL,"utf-8",dataXml);
-        log.info("下单返回res："+res);
+            //调用微信下单接口
+            Response<String> res =  HttpsClientUtil.getClient().sendPostXml(WxInfo.ORDER_URL,"utf-8",dataXml);
+            log.info("下单返回res："+res);
 
-        //将微信回参转为Map结构
-        Map<String, Object> resDataMap = Util.converterMap(res.getT());
+            //将微信回参转为Map结构
+            Map<String, Object> resDataMap = Util.converterMap(res.getT());
 
-        //签名验证
-        boolean flag = checkSign(resDataMap);
-        if(!flag)
-        {
-            return "签名验证失败，支付异常";
+            //签名验证
+            boolean flag = checkSign(resDataMap);
+            if(!flag)
+            {
+                return "签名验证失败，支付异常";
+            }
+
+            //TODO 数据库操作，修改订单信息，添加微信支付订单号transaction_id
+
+            //获取交易会话ID，返回给H5//TODO  这里要处理
+            String prepayId = getPrepayId(resDataMap);
+
+            log.info("交易会话ID："+prepayId);
+            return resJson("0000","ok",getDataInfo(prepayId));
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e);
         }
+        return "";
+    }
 
-        //TODO 数据库操作，修改订单信息，添加微信支付订单号transaction_id
+    private String  resJson(String status,String message,JSONObject obj)
+    {
+        JSONObject res = new JSONObject();
+        res.put("status",status);
+        res.put("message",message);
+        if(obj != null)
+        {
+            res.put("result",obj);
+        }
+        return res.toJSONString();
+    }
 
-        //获取交易会话ID，返回给H5
-        String prepayId = getPrepayId(resDataMap);
-        log.info("交易会话ID："+prepayId);
+    private JSONObject getDataInfo(String prepay_id)
+    {
+        JSONObject res = new JSONObject();
+        try {
+            //生成签名的时间戳
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            //生成签名的随机串
+            String noncestr = WxUtil.getnoncestr();
+            //签名方式
+            String signType = "MD5";
+            String packages = "prepay_id="+prepay_id;
 
-        return prepayId;
+            Map<String, Object> map = new HashMap<>();
+            map.put("appId","wx4f81fa7f2a9ee51e");
+            map.put("timeStamp",timestamp);
+            map.put("nonceStr",noncestr);
+            map.put("package",packages);
+            map.put("signType",signType);
+
+            //生成签名
+            String sign = WxInfo.createSign(map);
+            res.put("appId","wx4f81fa7f2a9ee51e");
+            res.put("timeStamp",timestamp);
+            res.put("nonceStr",noncestr);
+            res.put("package",packages);
+            res.put("signType",signType);
+            res.put("paySign",sign);
+        } catch (Exception e) {
+            e.printStackTrace();
+            log.error(e);
+        }
+        return res;
     }
 
     /**
@@ -244,7 +296,7 @@ public class WxAction {
         }
 
         //获取支付交易会话ID，有效期2个小时
-        String prepay_id = String.valueOf(resMap.get("return_code"));
+        String prepay_id = String.valueOf(resMap.get("prepay_id"));
         return prepay_id;
     }
 
@@ -278,6 +330,8 @@ public class WxAction {
         map.put("notify_url","http://xfcheck.com/wxApi/wx/wxNotification");//通知地址
         map.put("trade_type","JSAPI");//交易类型
         map.put("openid",wxInfo.getOpenId(code));//openid
+        map.put("out_trade_no",out_trade_no);
+        map.put("total_fee",total_fee);
 
         //生成签名
         String sign = WxInfo.createSign(map);
@@ -371,8 +425,8 @@ public class WxAction {
 
     public static void main(String [] args)
     {
-        WxInfo info = WxInfo.getCacheWxInfo();
-        System.out.println(info.getToken());
+        WxAction wa = new WxAction();
+        wa.createOrder("ABCD1234","123.114.130.131","001SYTKl0q73sn1HIvKl0UsPKl0SYTKl");
     }
 
 }

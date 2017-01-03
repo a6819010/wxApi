@@ -1,5 +1,9 @@
 package com.hfyl.util;
 
+import com.hfyl.action.WxAction;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.MalformedURLException;
@@ -24,6 +28,9 @@ import java.util.Map;
 * @version V1.0
  */
 public class HttpsClientUtil {
+
+	private static Log log = LogFactory.getLog(WxAction.class);
+
 	private static String CHARCODING = "UTF-8";
 	private int TIMEOUT = 3000;
 	public static HttpsClientUtil getClient(){
@@ -275,9 +282,12 @@ public class HttpsClientUtil {
 		Response<String> res = new Response<String>();
 		StringBuilder result = new StringBuilder();
 		BufferedReader in = null;
+		HttpsURLConnection connection = null;
+		InputStream inputStream = null;
+		InputStreamReader inputStreamReader = null;
 		try {
 			URL realUrl = new URL(url);
-			HttpsURLConnection connection = (HttpsURLConnection) realUrl.openConnection();
+			connection = (HttpsURLConnection) realUrl.openConnection();
 			connection.setRequestMethod("POST");// 提交模式
 			connection.setRequestProperty("accept", "*/*");
 			connection.setRequestProperty("connection", "Keep-Alive");
@@ -285,14 +295,10 @@ public class HttpsClientUtil {
 			connection.setRequestProperty("Accept-Charset",charset);
 			connection.setRequestProperty("Content-Type","text/xml");
 
-			connection.setConnectTimeout(10000);
-			connection.setReadTimeout(15000);
+			//connection.setConnectTimeout(10000);
+			//connection.setReadTimeout(15000);
 			connection.setDoOutput(true);
-			connection.setHostnameVerifier(new HostnameVerifier() {
-				public boolean verify(String hostname, SSLSession session) {
-					return true;
-				}
-			});
+			connection.setDoInput(true);
 			connection.connect();
 
 			byte[] bypes = xml.getBytes();
@@ -301,8 +307,11 @@ public class HttpsClientUtil {
 
 			int code = connection.getResponseCode();
 
-			if(code==200){
-				in = new BufferedReader(new InputStreamReader(connection.getInputStream(),charset));
+			if(code==200)
+			{
+				inputStream = connection.getInputStream();
+				inputStreamReader = new InputStreamReader(inputStream,charset);
+				in = new BufferedReader(inputStreamReader);
 				String line;
 				while ((line = in.readLine()) != null) {
 					result.append(line);
@@ -310,7 +319,9 @@ public class HttpsClientUtil {
 				res.setCode("0000");
 				res.setMsg("ok");
 				res.setT(result.toString());
-			}else{
+			}
+			else
+			{
 				res.setCode("1001");
 				res.setMsg("返回码异常:" + code);
 			}
@@ -328,6 +339,19 @@ public class HttpsClientUtil {
 				if (in != null) {
 					in.close();
 				}
+				if(inputStreamReader != null)
+				{
+					inputStreamReader.close();
+				}
+				if(inputStream != null)
+				{
+					inputStream.close();
+				}
+				if(connection != null)
+				{
+					connection.disconnect();
+				}
+				log.info(res.toString());
 			} catch (Exception e2) {
 				res.setCode("1002");
 				res.setMsg("关闭连接异常");

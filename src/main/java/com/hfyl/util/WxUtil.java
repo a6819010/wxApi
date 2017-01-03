@@ -14,7 +14,8 @@ public class WxUtil {
      */
     public static  String getnoncestr(){
         UUID uuid = UUID.randomUUID();
-        return uuid.toString();
+        String temp = uuid.toString();
+        return temp.substring(0,32);
     }
 
     public static String getSha1(String str) {
